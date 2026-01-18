@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import SuggestionForm from './components/SuggestionForm'
 import SuggestionList from './components/SuggestionList'
 import ComponentGallery from './components/ComponentGallery'
+import Footer from './components/Footer'
 
 export interface Suggestion {
   id: number
@@ -89,10 +90,7 @@ function App() {
           )}
         </div>
 
-        <footer className="mt-16 text-center text-gray-500 text-sm">
-          <p>Backend: <span className="font-mono">localhost:8000</span></p>
-          <p className="mt-1">Auto-refreshes every 5 seconds</p>
-        </footer>
+        <Footer />
       </div>
     </div>
   )
