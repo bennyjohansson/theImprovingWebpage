@@ -85,15 +85,15 @@ Requirements:
 
 Return ONLY the component code, no explanations, no markdown formatting, no code fences.
 Start directly with: import React from 'react'"""
-response = client.chat.completions.create(
+
+        response = client.chat.completions.create(
             model="gpt-4o",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=1500,
             temperature=0.7
         )
         
-        code = response.choices[0].message.conten
-        code = message.content[0].text.strip()
+        code = response.choices[0].message.content.strip()
         
         # Remove markdown code fences if present
         if code.startswith("```"):
