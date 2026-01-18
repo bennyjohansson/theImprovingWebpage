@@ -7,7 +7,7 @@ Get the Self-Improving Webpage running in 5 minutes!
 Make sure you have:
 - Podman (or Docker) installed
 - Podman Compose installed
-- An Anthropic API key ([Get free key](https://console.anthropic.com/))
+- An OpenAI API key ([Get free key](https://platform.openai.com/api-keys))
 
 ## Step 2: Setup Environment 🔧
 
@@ -22,9 +22,9 @@ cp .env.example .env
 nano .env  # or: code .env, vim .env, etc.
 ```
 
-**Important**: Replace `your-key-here` with your actual Anthropic API key:
+**Important**: Replace `your-key-here` with your actual OpenAI API key:
 ```
-ANTHROPIC_API_KEY=sk-ant-your-actual-key-here-xxxxxxxxxxxxx
+OPENAI_API_KEY=sk-proj-your-actual-key-here-xxxxxxxxxxxxx
 ```
 
 ## Step 3: Launch Services 🚀

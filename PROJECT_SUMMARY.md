@@ -33,7 +33,7 @@ A fully functional AI-powered web application that:
 - Status badges and code viewer
 
 ✅ **Phase 4: AI Integration**
-- Claude API integration (Sonnet 4)
+- OpenAI GPT-4 integration
 - Suggestion validation function
 - Code generation function
 - Error handling for API failures
@@ -89,16 +89,16 @@ Frontend (React)  →  Backend (FastAPI)  →  Database (PostgreSQL)
 
 ## 🔑 Next Step: Add Your API Key
 
-**IMPORTANT**: The worker needs your Anthropic API key to function!
+**IMPORTANT**: The worker needs your OpenAI API key to function!
 
 ```bash
-# 1. Get your free API key from: https://console.anthropic.com/
+# 1. Get your API key from: https://platform.openai.com/api-keys
 
 # 2. Edit .env file
 nano .env
 
 # 3. Replace 'your-key-here' with your actual key
-ANTHROPIC_API_KEY=sk-ant-your-actual-key-xxxxx
+OPENAI_API_KEY=sk-proj-your-actual-key-xxxxx
 
 # 4. Start the worker
 podman-compose up -d worker
@@ -137,7 +137,7 @@ podman-compose logs -f backend    # See API calls
 From this codebase:
 - Building full-stack applications with React + FastAPI
 - Container orchestration with Docker/Podman
-- AI integration with Claude API
+- AI integration with OpenAI GPT-4 API
 - Background task processing
 - Modern frontend development (React 18, TypeScript, Tailwind)
 - REST API design and implementation
@@ -190,6 +190,6 @@ If you encounter any issues:
 
 ---
 
-**Built with ❤️ using Claude AI**
+**Built with ❤️ using OpenAI GPT-4**
 
 Ready to extend and customize! Happy coding! 🚀✨

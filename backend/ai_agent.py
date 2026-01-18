@@ -1,17 +1,17 @@
 import os
 import logging
-from anthropic import Anthropic
+from openai import OpenAI
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Initialize Anthropic client
-client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+# Initialize OpenAI client
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def validate_suggestion(content: str) -> dict:
     """
-    Validate if a suggestion is safe and actionable using Claude API.
+    Validate if a suggestion is safe and actionable using OpenAI API.
     
     Args:
         content: The suggestion text to validate
@@ -34,14 +34,15 @@ Determine if this suggestion is:
 Respond with ONLY a JSON object in this exact format:
 {{"approved": true/false, "reason": "brief explanation"}}"""
 
-        message = client.messages.create(
-            model="claude-sonnet-4-20250514",
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt}],
             max_tokens=200,
-            messages=[{"role": "user", "content": prompt}]
+            temperature=0.3
         )
         
         # Parse response
-        response_text = message.content[0].text.strip()
+        response_text = response.choices[0].message.content.strip()
         logger.info(f"Validation response: {response_text}")
         
         # Simple parsing - look for approved true/false
@@ -84,13 +85,14 @@ Requirements:
 
 Return ONLY the component code, no explanations, no markdown formatting, no code fences.
 Start directly with: import React from 'react'"""
-
-        message = client.messages.create(
-            model="claude-sonnet-4-20250514",
+response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt}],
             max_tokens=1500,
-            messages=[{"role": "user", "content": prompt}]
+            temperature=0.7
         )
         
+        code = response.choices[0].message.conten
         code = message.content[0].text.strip()
         
         # Remove markdown code fences if present

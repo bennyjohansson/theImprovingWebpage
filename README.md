@@ -1,6 +1,6 @@
 # 🤖 Self-Improving Webpage
 
-An experimental web application that improves itself based on user suggestions using AI-powered code generation with Claude.
+An experimental web application that improves itself based on user suggestions using AI-powered code generation with OpenAI GPT-4.
 
 ![Status](https://img.shields.io/badge/status-MVP-success)
 ![License](https://img.shields.io/badge/license-MIT-blue)
@@ -54,7 +54,7 @@ Code displayed in UI 📝
 ### Prerequisites
 
 - **Podman** (or Docker) & Podman Compose
-- **Anthropic API Key** ([Get one here](https://console.anthropic.com/))
+- **OpenAI API Key** ([Get one here](https://platform.openai.com/api-keys))
 
 ### Setup
 
@@ -66,7 +66,7 @@ cd theImprovingWebpage
 # Copy environment file
 cp .env.example .env
 
-# Add your Anthropic API key to .env
+# Add your OpenAI API key to .env
 # Edit .env and replace 'your-key-here' with your actual API key
 nano .env  # or use your preferred editor
 
@@ -214,7 +214,7 @@ curl http://localhost:8000/api/suggestions
 | Frontend | React 18, TypeScript, Vite, Tailwind CSS |
 | Backend | FastAPI, SQLAlchemy, Pydantic |
 | Database | PostgreSQL 16 |
-| AI | Anthropic Claude (Sonnet 4) |
+| AI | OpenAI GPT-4 |
 | Infrastructure | Podman/Docker, Podman Compose |
 | Web Server | Nginx (for frontend) |
 
@@ -243,7 +243,7 @@ POSTGRES_USER=myuser
 POSTGRES_PASSWORD=mypassword
 
 # API Keys
-ANTHROPIC_API_KEY=sk-ant-your-actual-key-here
+OPENAI_API_KEY=sk-your-actual-key-here
 ```
 
 ### Worker Settings
@@ -309,7 +309,7 @@ This is a learning project, but suggestions and improvements are welcome!
 
 ## 🙏 Acknowledgments
 
-- Built with [Claude](https://www.anthropic.com/) by Anthropic
+- Built with [GPT-4](https://openai.com/) by OpenAI
 - Inspired by AI-assisted development workflows
 - Created as a learning project for exploring agentic AI
 
