@@ -73,18 +73,25 @@ def generate_component_code(content: str) -> str:
 
 User Suggestion: "{content}"
 
-Generate a complete, production-ready React TypeScript functional component that implements this suggestion.
+Generate React component code that will be executed in a live preview using react-live.
 
-Requirements:
-- Use TypeScript with proper types
-- Use Tailwind CSS for styling
-- Make it modern and visually appealing
-- Include proper props interface if needed
-- Keep it simple and focused
-- No external dependencies beyond React and Tailwind
+CRITICAL REQUIREMENTS:
+- NO import statements (React is already available in scope)
+- NO export statements
+- NO TypeScript types or interfaces (use plain JavaScript/JSX)
+- Use Tailwind CSS classes for styling
+- End with render(<YourComponent />) to display it
+- If the component needs props, provide sensible default values in the render call
 
-Return ONLY the component code, no explanations, no markdown formatting, no code fences.
-Start directly with: import React from 'react'"""
+Example format:
+const MyComponent = () => {{
+  return <div className="p-4 text-blue-600">Hello</div>
+}}
+
+render(<MyComponent />)
+
+Return ONLY the code, no explanations, no markdown, no code fences.
+Start directly with: const"""
 
         response = client.chat.completions.create(
             model="gpt-4o",
