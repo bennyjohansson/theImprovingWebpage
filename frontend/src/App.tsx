@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react'
 import SuggestionForm from './components/SuggestionForm'
 import SuggestionList from './components/SuggestionList'
+import ComponentGallery from './components/ComponentGallery'
 
 export interface Suggestion {
   id: number
   content: string
   status: string
   generated_code: string | null
+  deployed: boolean
+  component_name: string | null
   created_at: string
   updated_at: string | null
 }
@@ -79,7 +82,10 @@ function App() {
               <p className="mt-4 text-gray-600">Loading suggestions...</p>
             </div>
           ) : (
-            <SuggestionList suggestions={suggestions} />
+            <>
+              <ComponentGallery />
+              <SuggestionList suggestions={suggestions} onRefresh={fetchSuggestions} />
+            </>
           )}
         </div>
 

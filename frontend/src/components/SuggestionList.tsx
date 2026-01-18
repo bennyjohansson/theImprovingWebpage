@@ -3,11 +3,13 @@ import { Suggestion } from '../App'
 
 interface SuggestionListProps {
   suggestions: Suggestion[]
+  onRefresh: () => void
 }
 
-function SuggestionList({ suggestions }: SuggestionListProps) {
+function SuggestionList({ suggestions, onRefresh }: SuggestionListProps) {
   const [expandedId, setExpandedId] = useState<number | null>(null)
   const [copiedId, setCopiedId] = useState<number | null>(null)
+  const [deployingId, setDeployingId] = useState<number | null>(null)
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -47,6 +49,52 @@ function SuggestionList({ suggestions }: SuggestionListProps) {
 
   const toggleExpand = (id: number) => {
     setExpandedId(expandedId === id ? null : id)
+  }
+
+  const handleDeploy = async (id: number) => {
+    setDeployingId(id)
+    try {
+      const response = await fetch(`http://localhost:8000/api/suggestions/${id}/deploy`, {
+        method: 'POST',
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        alert(`Failed to deploy: ${error.detail}`)
+        return
+      }
+      
+      alert('Component deployed successfully! Refresh to see it in the gallery.')
+      onRefresh()
+    } catch (error) {
+      console.error('Deploy error:', error)
+      alert('Failed to deploy component')
+    } finally {
+      setDeployingId(null)
+    }
+  }
+
+  const handleUndeploy = async (id: number) => {
+    setDeployingId(id)
+    try {
+      const response = await fetch(`http://localhost:8000/api/suggestions/${id}/undeploy`, {
+        method: 'POST',
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        alert(`Failed to undeploy: ${error.detail}`)
+        return
+      }
+      
+      alert('Component undeployed successfully!')
+      onRefresh()
+    } catch (error) {
+      console.error('Undeploy error:', error)
+      alert('Failed to undeploy component')
+    } finally {
+      setDeployingId(null)
+    }
   }
 
   if (suggestions.length === 0) {
@@ -91,12 +139,32 @@ function SuggestionList({ suggestions }: SuggestionListProps) {
 
           {suggestion.status === 'completed' && suggestion.generated_code && (
             <div className="mt-4">
-              <button
-                onClick={() => toggleExpand(suggestion.id)}
-                className="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center"
-              >
-                {expandedId === suggestion.id ? '🔽 Hide Code' : '🔼 View Code'}
-              </button>
+              <div className="flex gap-2 mb-2">
+                <button
+                  onClick={() => toggleExpand(suggestion.id)}
+                  className="flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center"
+                >
+                  {expandedId === suggestion.id ? '🔽 Hide Code' : '🔼 View Code'}
+                </button>
+                
+                {!suggestion.deployed ? (
+                  <button
+                    onClick={() => handleDeploy(suggestion.id)}
+                    disabled={deployingId === suggestion.id}
+                    className="bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white font-medium py-2 px-6 rounded-lg transition-colors"
+                  >
+                    {deployingId === suggestion.id ? '⏳' : '🚀 Deploy'}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleUndeploy(suggestion.id)}
+                    disabled={deployingId === suggestion.id}
+                    className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white font-medium py-2 px-6 rounded-lg transition-colors"
+                  >
+                    {deployingId === suggestion.id ? '⏳' : '📦 Undeploy'}
+                  </button>
+                )}
+              </div>
 
               {expandedId === suggestion.id && (
                 <div className="mt-4 relative">

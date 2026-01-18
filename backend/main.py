@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List
 import logging
+import os
+import re
 
 from database import get_db, init_db
 from models import Suggestion, SuggestionCreate, SuggestionResponse
@@ -82,3 +84,89 @@ def get_suggestion(suggestion_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Suggestion not found")
     
     return suggestion
+
+@app.post("/api/suggestions/{suggestion_id}/deploy")
+def deploy_suggestion(suggestion_id: int, db: Session = Depends(get_db)):
+    """Deploy an approved suggestion to the frontend"""
+    suggestion = db.query(Suggestion).filter(Suggestion.id == suggestion_id).first()
+    
+    if not suggestion:
+        raise HTTPException(status_code=404, detail="Suggestion not found")
+    
+    if suggestion.status != "approved":
+        raise HTTPException(status_code=400, detail="Can only deploy approved suggestions")
+    
+    if not suggestion.generated_code:
+        raise HTTPException(status_code=400, detail="No generated code available")
+    
+    try:
+        # Generate component name from suggestion ID
+        component_name = f"Generated{suggestion_id}"
+        
+        # Path to frontend generated components directory
+        generated_dir = "/app/frontend/src/generated"
+        os.makedirs(generated_dir, exist_ok=True)
+        
+        # Write component file
+        file_path = os.path.join(generated_dir, f"{component_name}.tsx")
+        
+        # Ensure the code exports a default component
+        code = suggestion.generated_code
+        if "export default" not in code:
+            # Try to find the component name and add export
+            match = re.search(r'const\s+(\w+)\s*[:=]', code)
+            if match:
+                comp_name = match.group(1)
+                code += f"\n\nexport default {comp_name};"
+            else:
+                code += f"\n\nexport default {component_name};"
+        
+        with open(file_path, 'w') as f:
+            f.write(code)
+        
+        # Update database
+        suggestion.deployed = True
+        suggestion.component_name = component_name
+        db.commit()
+        db.refresh(suggestion)
+        
+        logger.info(f"Deployed suggestion {suggestion_id} as {component_name}")
+        return {"message": "Component deployed successfully", "component_name": component_name}
+        
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error deploying suggestion {suggestion_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to deploy component: {str(e)}")
+
+@app.post("/api/suggestions/{suggestion_id}/undeploy")
+def undeploy_suggestion(suggestion_id: int, db: Session = Depends(get_db)):
+    """Undeploy a suggestion (mark as not deployed)"""
+    suggestion = db.query(Suggestion).filter(Suggestion.id == suggestion_id).first()
+    
+    if not suggestion:
+        raise HTTPException(status_code=404, detail="Suggestion not found")
+    
+    if not suggestion.deployed:
+        raise HTTPException(status_code=400, detail="Suggestion is not deployed")
+    
+    try:
+        # Update database
+        suggestion.deployed = False
+        db.commit()
+        db.refresh(suggestion)
+        
+        logger.info(f"Undeployed suggestion {suggestion_id}")
+        return {"message": "Component undeployed successfully"}
+        
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error undeploying suggestion {suggestion_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to undeploy component: {str(e)}")
+
+@app.get("/api/suggestions/deployed/list")
+def list_deployed_suggestions(db: Session = Depends(get_db)):
+    """List all deployed suggestions"""
+    deployed = db.query(Suggestion).filter(Suggestion.deployed == True).order_by(Suggestion.created_at.desc()).all()
+    logger.info(f"Retrieved {len(deployed)} deployed suggestions")
+    return deployed
+
