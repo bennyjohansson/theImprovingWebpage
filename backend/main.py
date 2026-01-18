@@ -93,8 +93,8 @@ def deploy_suggestion(suggestion_id: int, db: Session = Depends(get_db)):
     if not suggestion:
         raise HTTPException(status_code=404, detail="Suggestion not found")
     
-    if suggestion.status != "approved":
-        raise HTTPException(status_code=400, detail="Can only deploy approved suggestions")
+    if suggestion.status != "completed":
+        raise HTTPException(status_code=400, detail="Can only deploy completed suggestions")
     
     if not suggestion.generated_code:
         raise HTTPException(status_code=400, detail="No generated code available")

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { LiveProvider, LiveError, LivePreview } from 'react-live';
 
 interface Suggestion {
   id: number;
@@ -12,7 +13,6 @@ interface Suggestion {
 
 const ComponentGallery: React.FC = () => {
   const [deployed, setDeployed] = useState<Suggestion[]>([]);
-  const [components, setComponents] = useState<{ [key: string]: React.ComponentType }>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,22 +29,6 @@ const ComponentGallery: React.FC = () => {
       
       const data = await response.json();
       setDeployed(data);
-      
-      // Dynamically import deployed components
-      for (const suggestion of data) {
-        if (suggestion.component_name && !components[suggestion.component_name]) {
-          try {
-            const module = await import(`../generated/${suggestion.component_name}.tsx`);
-            setComponents(prev => ({
-              ...prev,
-              [suggestion.component_name!]: module.default
-            }));
-          } catch (err) {
-            console.error(`Failed to load component ${suggestion.component_name}:`, err);
-          }
-        }
-      }
-      
       setLoading(false);
     } catch (err) {
       console.error('Error fetching deployed components:', err);
@@ -86,8 +70,6 @@ const ComponentGallery: React.FC = () => {
       
       <div className="space-y-6">
         {deployed.map((suggestion) => {
-          const Component = components[suggestion.component_name!];
-          
           return (
             <div key={suggestion.id} className="border border-gray-200 rounded-lg p-4">
               <div className="mb-3">
@@ -98,15 +80,38 @@ const ComponentGallery: React.FC = () => {
               </div>
               
               <div className="border-t border-gray-200 pt-4">
-                {Component ? (
-                  <div className="bg-gray-50 p-4 rounded">
-                    <Component />
+                <div className="bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-lg">
+                  <div className="mb-4">
+                    <div className="text-5xl mb-3 text-center">🎨</div>
+                    <h3 className="text-xl font-semibold text-gray-800 mb-2 text-center">
+                      {suggestion.component_name}
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-4 text-center">
+                      Component deployed and rendered live!
+                    </p>
                   </div>
-                ) : (
-                  <div className="bg-yellow-50 p-4 rounded text-yellow-800 text-sm">
-                    Component loading... (refresh the page if it doesn't appear)
+                  
+                  {/* Live component rendering */}
+                  <div className="bg-white p-4 rounded border-2 border-green-300 mb-4">
+                    <p className="text-xs text-green-700 font-semibold mb-2">✨ Live Component:</p>
+                    <LiveProvider code={suggestion.generated_code || ''} scope={{ React }}>
+                      <div className="bg-gray-50 p-4 rounded">
+                        <LivePreview />
+                        <LiveError className="text-red-600 text-sm mt-2" />
+                      </div>
+                    </LiveProvider>
                   </div>
-                )}
+                  
+                  {/* Code preview */}
+                  <details className="bg-white p-4 rounded border border-gray-200">
+                    <summary className="text-xs text-gray-700 font-medium cursor-pointer">
+                      📄 View Source Code
+                    </summary>
+                    <pre className="text-xs overflow-x-auto bg-gray-50 p-2 rounded mt-2">
+                      <code>{suggestion.generated_code}</code>
+                    </pre>
+                  </details>
+                </div>
               </div>
             </div>
           );
