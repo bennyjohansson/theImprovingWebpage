@@ -73,25 +73,27 @@ def generate_component_code(content: str) -> str:
 
 User Suggestion: "{content}"
 
-Generate React component code that will be executed in a live preview using react-live.
+Generate React JSX code that will be executed in a live preview using react-live.
 
 CRITICAL REQUIREMENTS:
-- NO import statements (React is already available in scope)
-- NO export statements
-- NO TypeScript types or interfaces (use plain JavaScript/JSX)
+- NO import statements
+- NO export statements  
+- NO const/let/var declarations
+- Write as a FUNCTION EXPRESSION, like: () => {{ ... }}
 - Use Tailwind CSS classes for styling
-- End with render(<YourComponent />) to display it
-- If the component needs props, provide sensible default values in the render call
+- Return JSX directly from the function
 
-Example format:
-const MyComponent = () => {{
-  return <div className="p-4 text-blue-600">Hello</div>
+EXACT FORMAT TO FOLLOW:
+() => {{
+  return (
+    <div className="p-4 bg-blue-100 rounded">
+      <h1 className="text-xl font-bold">Your content here</h1>
+    </div>
+  )
 }}
 
-render(<MyComponent />)
-
-Return ONLY the code, no explanations, no markdown, no code fences.
-Start directly with: const"""
+Return ONLY the arrow function code, no explanations, no markdown.
+Start with: () =>"""
 
         response = client.chat.completions.create(
             model="gpt-4o",

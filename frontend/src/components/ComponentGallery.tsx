@@ -94,7 +94,11 @@ const ComponentGallery: React.FC = () => {
                   {/* Live component rendering */}
                   <div className="bg-white p-4 rounded border-2 border-green-300 mb-4">
                     <p className="text-xs text-green-700 font-semibold mb-2">✨ Live Component:</p>
-                    <LiveProvider code={suggestion.generated_code || ''} scope={{ React }}>
+                    <LiveProvider 
+                      code={suggestion.generated_code || ''} 
+                      scope={{ React }}
+                      noInline={false}
+                    >
                       <div className="bg-gray-50 p-4 rounded">
                         <LivePreview />
                         <LiveError className="text-red-600 text-sm mt-2" />
