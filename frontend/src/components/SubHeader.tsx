@@ -1,12 +1,13 @@
+```typescript
 import React from 'react';
-import styled from 'styled-components';
 
-const BoldSubHeader = styled.h2`
-  font-weight: bold;
-`;
-
-const SubHeader = ({ text }) => {
-  return <BoldSubHeader>{text}</BoldSubHeader>;
+const SubHeader: React.FC = ({ children }) => {
+  return (
+    <h2 style={{ fontWeight: 'bold' }}>
+      {children}
+    </h2>
+  );
 };
 
 export default SubHeader;
+```
