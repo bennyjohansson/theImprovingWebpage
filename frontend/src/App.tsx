@@ -63,7 +63,7 @@ function App() {
           <h1 className="text-5xl font-bold text-gray-800 mb-4">
             🔬 Research on a self-improving webpage
           </h1>
-          <p className="text-xl text-gray-600">
+          <p className="text-xl text-gray-600 font-bold">
             Submit suggestions and watch AI generate code automatically
           </p>
         </header>
