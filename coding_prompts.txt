@@ -1,0 +1,170 @@
+# Coding Prompts for VSCode/Claude
+
+Copy and paste these prompts into your VSCode chat with Claude. Attach the ARCHITECTURE.md file to provide context.
+
+---
+
+## Phase 1: Infrastructure
+
+```
+Create a docker-compose.yml file for this project with:
+- PostgreSQL 16-alpine service
+- Named volume for data persistence
+- Health check for postgres
+- Environment variables: POSTGRES_DB=suggestions, POSTGRES_USER=myuser, POSTGRES_PASSWORD=mypassword
+- Port 5432 exposed
+
+Also create:
+- .env.example with database credentials and ANTHROPIC_API_KEY placeholder
+- .gitignore for Python, Node.js, Docker, and common IDE files
+```
+
+---
+
+## Phase 2: Backend API
+
+```
+Create a FastAPI backend in the backend/ directory with:
+
+1. Dockerfile using Python 3.11-slim with hot-reload enabled
+2. requirements.txt with: fastapi, uvicorn[standard], sqlalchemy, psycopg2-binary, pydantic
+3. database.py with SQLAlchemy setup connecting to PostgreSQL
+4. models.py with a Suggestion model having: id, content, status, generated_code, created_at, updated_at
+5. main.py with:
+   - CORS middleware for localhost:3000
+   - Health check endpoint
+   - POST /api/suggestions (create)
+   - GET /api/suggestions (list all)
+   - GET /api/suggestions/{id} (get one)
+
+Update docker-compose.yml to add the backend service with hot-reload volume mounting.
+```
+
+---
+
+## Phase 3: Frontend
+
+```
+Create a React + TypeScript frontend in the frontend/ directory with:
+
+1. Multi-stage Dockerfile (build stage + nginx production stage)
+2. nginx.conf that proxies /api requests to backend:8000
+3. Vite + React + TypeScript project setup
+4. Tailwind CSS configured
+5. Components:
+   - SuggestionForm: textarea input + submit button
+   - SuggestionList: displays suggestions with status badges (pending=yellow, completed=green, failed=red)
+   - App: combines both, fetches suggestions every 5 seconds
+
+Make the UI clean and modern with Tailwind.
+
+Update docker-compose.yml to add the frontend service.
+```
+
+---
+
+## Phase 4: AI Agent
+
+```
+Create backend/ai_agent.py with two functions using the Anthropic SDK:
+
+1. validate_suggestion(content: str) -> dict
+   - Calls Claude API to check if suggestion is safe and actionable
+   - Returns: {"approved": bool, "reason": str}
+   - Use claude-sonnet-4-20250514 model
+
+2. generate_component_code(content: str) -> str
+   - Calls Claude API to generate a React TypeScript component
+   - Returns the component code as a string
+   - Use claude-sonnet-4-20250514 model
+
+Add 'anthropic' to requirements.txt.
+Include error handling for API failures.
+```
+
+---
+
+## Phase 5: Background Worker
+
+```
+Create backend/worker.py that:
+
+1. Runs an infinite loop (with 10 second sleep)
+2. Queries database for suggestions with status='pending'
+3. For each pending suggestion:
+   - Set status='processing'
+   - Call validate_suggestion()
+   - If approved, call generate_component_code()
+   - Save generated code to database
+   - Set status='completed' or 'failed'
+4. Logs all actions clearly
+
+Update docker-compose.yml to add worker service that:
+- Uses the backend Dockerfile
+- Runs 'python worker.py' as command
+- Has ANTHROPIC_API_KEY environment variable
+- Depends on postgres
+```
+
+---
+
+## Phase 6: Display Generated Code
+
+```
+Update the frontend to:
+
+1. Add a "View Code" button to each completed suggestion in SuggestionList
+2. When clicked, display the generated_code in a modal or expandable section
+3. Format the code nicely (use <pre> and <code> tags)
+4. Add syntax highlighting if easy (optional)
+5. Include a "Copy" button to copy code to clipboard
+
+Keep the UI clean and user-friendly.
+```
+
+---
+
+## Phase 7: Documentation & Polish
+
+```
+Create a comprehensive README.md with:
+
+1. Project description
+2. Prerequisites (Docker, Docker Compose)
+3. Setup instructions:
+   - Clone repo
+   - Copy .env.example to .env
+   - Add ANTHROPIC_API_KEY
+   - Run docker-compose up
+4. Usage instructions
+5. API documentation
+6. Troubleshooting section
+
+Also add:
+- Loading states to frontend (spinner while fetching)
+- Error messages for failed API calls
+- Better logging in backend and worker
+```
+
+---
+
+## Tips for Using These Prompts
+
+1. **Attach context**: Always attach ARCHITECTURE.md when starting a new chat
+2. **One phase at a time**: Complete and test each phase before moving to next
+3. **Iterate**: If something doesn't work, ask Claude to fix it
+4. **Ask for explanations**: Add "and explain your approach" to learn
+5. **Test frequently**: Run `docker-compose up` after each phase
+
+## Example Workflow
+
+```
+1. Open VSCode
+2. Start new Claude chat
+3. Attach ARCHITECTURE.md
+4. Paste "Phase 1: Infrastructure" prompt
+5. Review generated files
+6. Run docker-compose up to test
+7. If working, move to Phase 2
+8. If not working, ask Claude to debug
+```

@@ -1,0 +1,242 @@
+# Implementation Plan
+
+Complete these phases in order. Each phase should result in a working, testable increment.
+
+---
+
+## Phase 1: Infrastructure (Day 1 - 2 hours)
+
+**Goal**: Get Docker Compose running with Postgres
+
+### Deliverables
+- `docker-compose.yml` with Postgres service
+- `.env.example` file
+- `.gitignore`
+
+### Test
+```bash
+docker-compose up -d
+docker exec -it <postgres_container> psql -U myuser -d suggestions
+# Should connect successfully
+```
+
+### Done When
+- ✅ Postgres starts without errors
+- ✅ Can connect via psql
+- ✅ Data persists after restart
+
+---
+
+## Phase 2: Backend API (Day 1-2 - 4 hours)
+
+**Goal**: FastAPI backend with CRUD endpoints
+
+### Deliverables
+- `backend/` directory with:
+  - Dockerfile
+  - requirements.txt (FastAPI, SQLAlchemy, psycopg2-binary)
+  - main.py (FastAPI app with CRUD endpoints)
+  - models.py (Suggestion model)
+  - database.py (SQLAlchemy setup)
+- Updated `docker-compose.yml` with backend service
+
+### Test
+```bash
+docker-compose up --build
+curl -X POST http://localhost:8000/api/suggestions \
+  -H "Content-Type: application/json" \
+  -d '{"content": "add a title"}'
+curl http://localhost:8000/api/suggestions
+```
+
+### Done When
+- ✅ Backend accessible at :8000
+- ✅ Can create suggestions via POST
+- ✅ Can retrieve suggestions via GET
+- ✅ Data saves to Postgres
+- ✅ Auto-reload works (hot reload on code changes)
+
+---
+
+## Phase 3: Frontend (Day 2 - 4 hours)
+
+**Goal**: React app that displays and submits suggestions
+
+### Deliverables
+- `frontend/` directory with:
+  - Dockerfile (multi-stage: build + nginx)
+  - nginx.conf (reverse proxy to backend)
+  - package.json (React, TypeScript, Vite, Tailwind)
+  - src/App.tsx (main UI component)
+  - src/components/SuggestionForm.tsx
+  - src/components/SuggestionList.tsx
+- Updated `docker-compose.yml` with frontend service
+
+### Test
+```bash
+docker-compose up --build
+# Open http://localhost:3000
+# Submit suggestion, verify it appears in list
+```
+
+### Done When
+- ✅ Frontend accessible at :3000
+- ✅ Can submit suggestions via form
+- ✅ Suggestions display with status badges
+- ✅ Auto-refreshes every 5 seconds
+- ✅ No CORS errors
+
+---
+
+## Phase 4: AI Agent (Day 3 - 3 hours)
+
+**Goal**: Claude API integration for validation and code generation
+
+### Deliverables
+- `backend/ai_agent.py` with:
+  - `validate_suggestion(content: str) -> dict`
+  - `generate_component_code(content: str) -> str`
+- Updated requirements.txt (add anthropic SDK)
+- Environment variable: `ANTHROPIC_API_KEY`
+
+### Test
+```bash
+docker exec -it <backend_container> python
+>>> from ai_agent import generate_component_code
+>>> code = generate_component_code("add a welcome title")
+>>> print(code)  # Should output React component
+```
+
+### Done When
+- ✅ Can call validation function
+- ✅ Can call code generation function
+- ✅ Functions return sensible results
+- ✅ Handles API errors gracefully
+
+---
+
+## Phase 5: Background Worker (Day 3-4 - 3 hours)
+
+**Goal**: Automated processing of pending suggestions
+
+### Deliverables
+- `backend/worker.py`:
+  - Infinite loop checking for pending suggestions
+  - Calls ai_agent functions
+  - Updates database with results
+- Updated `docker-compose.yml` with worker service
+
+### Test
+```bash
+docker-compose up
+# Submit suggestion via frontend
+# Watch logs: docker-compose logs -f worker
+# Should see processing messages
+# Suggestion status should change to 'completed'
+```
+
+### Done When
+- ✅ Worker starts automatically
+- ✅ Picks up pending suggestions
+- ✅ Calls Claude API
+- ✅ Updates database with generated code
+- ✅ Updates status to 'completed' or 'failed'
+- ✅ Logs visible and informative
+
+---
+
+## Phase 6: Display Generated Code (Day 4 - 2 hours)
+
+**Goal**: Show generated code in the UI
+
+### Deliverables
+- Updated frontend to:
+  - Display "View Code" button for completed suggestions
+  - Show generated code in expandable section or modal
+  - Syntax highlighting (optional)
+
+### Test
+```bash
+# Submit suggestion
+# Wait for completion
+# Click "View Code"
+# Should see React component code
+```
+
+### Done When
+- ✅ "View Code" button appears for completed suggestions
+- ✅ Clicking shows the generated code
+- ✅ Code is readable and formatted
+
+---
+
+## Phase 7: Polish & Documentation (Day 5 - 2 hours)
+
+**Goal**: Production-ready MVP
+
+### Deliverables
+- README.md with:
+  - Setup instructions
+  - How to run
+  - Environment variables needed
+  - API documentation
+- Error handling in all components
+- Loading states in frontend
+- Proper logging
+
+### Done When
+- ✅ Someone can clone and run with clear instructions
+- ✅ No unhandled errors
+- ✅ User-friendly error messages
+- ✅ All services start with one command
+
+---
+
+## Total Time Estimate: 4-5 days
+
+**Day 1**: Infrastructure + Backend (6 hours)
+**Day 2**: Frontend (4 hours)
+**Day 3**: AI Integration (6 hours)
+**Day 4**: Worker + Code Display (5 hours)
+**Day 5**: Polish (2 hours)
+
+## Success Criteria
+
+After all phases complete:
+
+1. Run `docker-compose up`
+2. Open http://localhost:3000
+3. Submit: "add a welcome message to the page"
+4. Wait 10-30 seconds
+5. See status change to "completed"
+6. Click "View Code" to see generated React component
+7. All data persists after `docker-compose down` and restart
+
+---
+
+## Quick Reference Commands
+
+```bash
+# Initial setup
+cp .env.example .env
+# Edit .env and add ANTHROPIC_API_KEY
+
+# Start everything
+docker-compose up --build
+
+# View logs
+docker-compose logs -f worker
+docker-compose logs -f backend
+
+# Stop
+docker-compose down
+
+# Rebuild specific service
+docker-compose up --build -d frontend
+
+# Access database
+docker exec -it <postgres_container> psql -U myuser -d suggestions
+
+# Clean everything (including data)
+docker-compose down -v
+```

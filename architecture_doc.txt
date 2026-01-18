@@ -1,0 +1,146 @@
+# Self-Improving Webpage - Architecture
+
+## Overview
+A web application where users submit improvement suggestions, and an AI agent automatically generates, tests, and deploys code changes.
+
+## System Architecture
+
+```
+┌─────────────────────────────────────────┐
+│         Docker Compose                  │
+│  ┌──────────┐  ┌──────────┐  ┌────────┐│
+│  │ Frontend │  │ Backend  │  │Postgres││
+│  │  :3000   │  │  :8000   │  │ :5432  ││
+│  └──────────┘  └────┬─────┘  └────────┘│
+│                     │                   │
+│                ┌────┴─────┐             │
+│                │  Worker  │             │
+│                └──────────┘             │
+└─────────────────────────────────────────┘
+```
+
+## Components
+
+### 1. Frontend (Port 3000)
+- **Tech**: React + TypeScript + Vite + Tailwind CSS
+- **Container**: Nginx (multi-stage Docker build)
+- **Responsibilities**:
+  - Form to submit improvement suggestions
+  - Display list of suggestions with status badges
+  - Show generated code for completed suggestions
+  - Auto-refresh every 5 seconds
+
+### 2. Backend API (Port 8000)
+- **Tech**: FastAPI + SQLAlchemy + Python 3.11
+- **Responsibilities**:
+  - REST API for CRUD operations on suggestions
+  - Database connection management
+  - CORS configuration for frontend
+
+**API Endpoints**:
+```
+GET    /health
+POST   /api/suggestions          # Create new suggestion
+GET    /api/suggestions          # List all
+GET    /api/suggestions/{id}     # Get one
+```
+
+### 3. Database (Port 5432)
+- **Tech**: PostgreSQL 16
+- **Schema**:
+```sql
+suggestions:
+  id              SERIAL PRIMARY KEY
+  content         TEXT NOT NULL
+  status          VARCHAR(50) DEFAULT 'pending'
+  generated_code  TEXT NULL
+  created_at      TIMESTAMP DEFAULT NOW()
+  updated_at      TIMESTAMP NULL
+```
+
+**Status values**: `pending`, `processing`, `completed`, `failed`
+
+### 4. Worker
+- **Tech**: Python 3.11 + Anthropic SDK
+- **Responsibilities**:
+  - Poll database every 10 seconds for `status='pending'`
+  - Validate suggestion with Claude API
+  - Generate React component code with Claude API
+  - Save generated code to database
+  - Update status
+
+## Data Flow
+
+1. User submits suggestion → Frontend POST to Backend
+2. Backend saves to Postgres with `status='pending'`
+3. Worker finds pending suggestion
+4. Worker calls Claude API to validate
+5. If valid, Worker calls Claude API to generate code
+6. Worker saves code and sets `status='completed'`
+7. Frontend shows updated status and generated code
+
+## Environment Variables
+
+```bash
+# Database
+DATABASE_URL=postgresql://myuser:mypassword@postgres:5432/suggestions
+
+# API Keys
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+## File Structure
+
+```
+self-improving-webpage/
+├── docker-compose.yml
+├── .env
+├── .gitignore
+├── README.md
+│
+├── frontend/
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── vite.config.ts
+│   ├── tailwind.config.js
+│   └── src/
+│       ├── App.tsx
+│       ├── main.tsx
+│       └── components/
+│
+└── backend/
+    ├── Dockerfile
+    ├── requirements.txt
+    ├── main.py           # FastAPI app
+    ├── models.py         # SQLAlchemy models
+    ├── database.py       # DB connection
+    ├── ai_agent.py       # Claude API integration
+    └── worker.py         # Background processor
+```
+
+## Docker Compose Services
+
+```yaml
+services:
+  postgres:      # PostgreSQL 16-alpine
+  backend:       # FastAPI with hot-reload
+  worker:        # Python worker script
+  frontend:      # React + Nginx (production build)
+```
+
+## MVP Scope
+
+**In Scope**:
+- ✅ Submit and view suggestions
+- ✅ AI validation of suggestions
+- ✅ AI code generation
+- ✅ Display generated code in UI
+- ✅ All data persists in Postgres
+
+**Out of Scope (Future)**:
+- Auto-deployment to frontend
+- GitHub integration
+- Automated testing
+- User authentication
