@@ -170,3 +170,121 @@ def list_deployed_suggestions(db: Session = Depends(get_db)):
     logger.info(f"Retrieved {len(deployed)} deployed suggestions")
     return deployed
 
+@app.post("/api/suggestions/{suggestion_id}/analyze")
+def analyze_suggestion(suggestion_id: int, db: Session = Depends(get_db)):
+    """Analyze which files need modification for a suggestion"""
+    from multi_agent import analyze_files_for_suggestion
+    
+    suggestion = db.query(Suggestion).filter(Suggestion.id == suggestion_id).first()
+    
+    if not suggestion:
+        raise HTTPException(status_code=404, detail="Suggestion not found")
+    
+    if suggestion.status != "completed":
+        raise HTTPException(status_code=400, detail="Can only analyze completed suggestions")
+    
+    try:
+        analysis = analyze_files_for_suggestion(suggestion.content)
+        return analysis
+    except Exception as e:
+        logger.error(f"Error analyzing suggestion {suggestion_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+@app.post("/api/suggestions/{suggestion_id}/generate-changes")
+def generate_changes(suggestion_id: int, db: Session = Depends(get_db)):
+    """Generate multi-file changes for a suggestion"""
+    from multi_agent import analyze_files_for_suggestion, generate_file_modification, review_changes
+    
+    suggestion = db.query(Suggestion).filter(Suggestion.id == suggestion_id).first()
+    
+    if not suggestion:
+        raise HTTPException(status_code=404, detail="Suggestion not found")
+    
+    if suggestion.status != "completed":
+        raise HTTPException(status_code=400, detail="Can only generate changes for completed suggestions")
+    
+    try:
+        # Step 1: Analyze which files to modify
+        analysis = analyze_files_for_suggestion(suggestion.content)
+        files_to_modify = analysis.get("files_to_modify", [])
+        
+        if not files_to_modify:
+            return {"error": "No files identified for modification"}
+        
+        # Step 2: Generate modifications for each file
+        changes = {}
+        for file_path in files_to_modify[:2]:  # Limit to 2 files for simplicity
+            # Read current file content (if exists)
+            full_path = os.path.join("/Users/bennyjohansson/Documents/Projects/theImprovingWebpage", file_path)
+            current_content = ""
+            if os.path.exists(full_path):
+                with open(full_path, 'r') as f:
+                    current_content = f.read()
+            
+            # Generate modification
+            modified_content = generate_file_modification(
+                suggestion.content,
+                file_path,
+                current_content
+            )
+            changes[file_path] = modified_content
+        
+        # Step 3: Review changes
+        review = review_changes(suggestion.content, changes)
+        
+        return {
+            "analysis": analysis,
+            "changes": changes,
+            "review": review,
+            "suggestion_id": suggestion_id
+        }
+        
+    except Exception as e:
+        logger.error(f"Error generating changes for suggestion {suggestion_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Generation failed: {str(e)}")
+
+@app.post("/api/suggestions/{suggestion_id}/apply")
+def apply_changes(
+    suggestion_id: int,
+    changes: dict,
+    db: Session = Depends(get_db)
+):
+    """Apply changes and create git branch"""
+    from git_manager import GitManager
+    
+    suggestion = db.query(Suggestion).filter(Suggestion.id == suggestion_id).first()
+    
+    if not suggestion:
+        raise HTTPException(status_code=404, detail="Suggestion not found")
+    
+    try:
+        git = GitManager()
+        
+        # Create branch
+        branch_name = git.create_branch(suggestion_id, suggestion.content[:30])
+        
+        # Apply changes
+        modified_files = git.apply_changes(changes)
+        
+        # Commit
+        commit_message = f"AI: {suggestion.content}\n\nSuggestion #{suggestion_id}"
+        commit_hash = git.commit_changes(commit_message, modified_files)
+        
+        # Get diff for review
+        diff = git.get_diff()
+        
+        logger.info(f"Applied changes for suggestion {suggestion_id}: {branch_name}")
+        
+        return {
+            "success": True,
+            "branch": branch_name,
+            "commit": commit_hash[:7],
+            "modified_files": modified_files,
+            "diff": diff
+        }
+        
+    except Exception as e:
+        logger.error(f"Error applying changes for suggestion {suggestion_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to apply changes: {str(e)}")
+
+

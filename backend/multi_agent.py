@@ -3,6 +3,10 @@ import logging
 from openai import OpenAI
 from typing import Dict, List
 import json
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -48,6 +52,15 @@ Respond ONLY with JSON in this exact format:
         
         result_text = response.choices[0].message.content.strip()
         logger.info(f"File analysis: {result_text}")
+        
+        # Strip markdown code blocks if present
+        if result_text.startswith("```json"):
+            result_text = result_text[7:]  # Remove ```json
+        if result_text.startswith("```"):
+            result_text = result_text[3:]  # Remove ```
+        if result_text.endswith("```"):
+            result_text = result_text[:-3]  # Remove trailing ```
+        result_text = result_text.strip()
         
         # Parse JSON response
         result = json.loads(result_text)
@@ -157,6 +170,15 @@ Respond ONLY with JSON:
         
         review_text = response.choices[0].message.content.strip()
         logger.info(f"Review result: {review_text}")
+        
+        # Strip markdown code blocks if present
+        if review_text.startswith("```json"):
+            review_text = review_text[7:]
+        if review_text.startswith("```"):
+            review_text = review_text[3:]
+        if review_text.endswith("```"):
+            review_text = review_text[:-3]
+        review_text = review_text.strip()
         
         review = json.loads(review_text)
         return review
