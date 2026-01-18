@@ -10,6 +10,10 @@ function SuggestionList({ suggestions, onRefresh }: SuggestionListProps) {
   const [expandedId, setExpandedId] = useState<number | null>(null)
   const [copiedId, setCopiedId] = useState<number | null>(null)
   const [deployingId, setDeployingId] = useState<number | null>(null)
+  const [analyzingId, setAnalyzingId] = useState<number | null>(null)
+  const [generatingId, setGeneratingId] = useState<number | null>(null)
+  const [analysis, setAnalysis] = useState<Record<number, any>>({})
+  const [changes, setChanges] = useState<Record<number, any>>({})
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -97,6 +101,53 @@ function SuggestionList({ suggestions, onRefresh }: SuggestionListProps) {
     }
   }
 
+  const handleAnalyze = async (id: number) => {
+    setAnalyzingId(id)
+    try {
+      const response = await fetch(`http://localhost:8000/api/suggestions/${id}/analyze`, {
+        method: 'POST',
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        alert(`Analysis failed: ${error.detail}`)
+        return
+      }
+      
+      const data = await response.json()
+      setAnalysis({ ...analysis, [id]: data })
+    } catch (error) {
+      console.error('Analysis error:', error)
+      alert('Failed to analyze suggestion')
+    } finally {
+      setAnalyzingId(null)
+    }
+  }
+
+  const handleGenerateChanges = async (id: number) => {
+    setGeneratingId(id)
+    try {
+      const response = await fetch(`http://localhost:8000/api/suggestions/${id}/generate-changes`, {
+        method: 'POST',
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        alert(`Generation failed: ${error.detail}`)
+        return
+      }
+      
+      const data = await response.json()
+      setChanges({ ...changes, [id]: data })
+      alert('Multi-file changes generated! Review the results below.')
+    } catch (error) {
+      console.error('Generation error:', error)
+      alert('Failed to generate changes')
+    } finally {
+      setGeneratingId(null)
+    }
+  }
+
   if (suggestions.length === 0) {
     return (
       <div className="bg-white rounded-xl shadow-lg p-12 text-center">
@@ -147,6 +198,22 @@ function SuggestionList({ suggestions, onRefresh }: SuggestionListProps) {
                   {expandedId === suggestion.id ? '🔽 Hide Code' : '🔼 View Code'}
                 </button>
                 
+                <button
+                  onClick={() => handleAnalyze(suggestion.id)}
+                  disabled={analyzingId === suggestion.id}
+                  className="bg-purple-500 hover:bg-purple-600 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                >
+                  {analyzingId === suggestion.id ? '⏳' : '🔍 Analyze'}
+                </button>
+
+                <button
+                  onClick={() => handleGenerateChanges(suggestion.id)}
+                  disabled={generatingId === suggestion.id}
+                  className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                >
+                  {generatingId === suggestion.id ? '⏳' : '🤖 Generate'}
+                </button>
+                
                 {!suggestion.deployed ? (
                   <button
                     onClick={() => handleDeploy(suggestion.id)}
@@ -180,6 +247,71 @@ function SuggestionList({ suggestions, onRefresh }: SuggestionListProps) {
                   <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
                     <code>{suggestion.generated_code}</code>
                   </pre>
+                </div>
+              )}
+
+              {analysis[suggestion.id] && (
+                <div className="mt-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                  <h4 className="font-semibold text-purple-900 mb-2">🔍 Analysis Results</h4>
+                  <p className="text-sm text-gray-700 mb-2"><strong>Files to modify:</strong> {analysis[suggestion.id].files_to_modify.join(', ')}</p>
+                  <p className="text-sm text-gray-700 mb-2"><strong>Reasoning:</strong> {analysis[suggestion.id].reasoning}</p>
+                  <p className="text-sm text-gray-700"><strong>Complexity:</strong> {analysis[suggestion.id].complexity}</p>
+                </div>
+              )}
+
+              {changes[suggestion.id] && (
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <h4 className="font-semibold text-blue-900 mb-2">🤖 Multi-Agent Results</h4>
+                  
+                  <div className="mb-3">
+                    <p className="text-sm font-semibold text-gray-700">Review Status:</p>
+                    <div className={`inline-block px-3 py-1 rounded text-sm ${
+                      changes[suggestion.id].review.approved 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {changes[suggestion.id].review.approved ? '✅ Approved' : '❌ Issues Found'}
+                    </div>
+                    <span className="ml-2 text-sm text-gray-600">
+                      Risk: {changes[suggestion.id].review.risk_level}
+                    </span>
+                  </div>
+
+                  {changes[suggestion.id].review.issues.length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-sm font-semibold text-gray-700">Issues:</p>
+                      <ul className="list-disc list-inside text-sm text-gray-700">
+                        {changes[suggestion.id].review.issues.map((issue: string, i: number) => (
+                          <li key={i}>{issue}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {changes[suggestion.id].review.suggestions.length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-sm font-semibold text-gray-700">Suggestions:</p>
+                      <ul className="list-disc list-inside text-sm text-gray-700">
+                        {changes[suggestion.id].review.suggestions.map((sug: string, i: number) => (
+                          <li key={i}>{sug}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <div>
+                    <p className="text-sm font-semibold text-gray-700 mb-2">Files Modified:</p>
+                    {Object.entries(changes[suggestion.id].changes).map(([file, code]: [string, any]) => (
+                      <details key={file} className="mb-2">
+                        <summary className="cursor-pointer text-sm text-blue-700 hover:text-blue-900 font-medium">
+                          📄 {file}
+                        </summary>
+                        <pre className="mt-2 bg-gray-900 text-gray-100 p-3 rounded text-xs overflow-x-auto">
+                          <code>{code}</code>
+                        </pre>
+                      </details>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
