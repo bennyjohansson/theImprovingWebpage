@@ -4,12 +4,12 @@ import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Toolti
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-const App = () => {
+const ChartComponent = () => {
   const data = {
     labels: [2001, 2002, 2003, 2004, 2005, 2006],
     datasets: [
       {
-        label: 'Annual Data',
+        label: 'Yearly Data',
         data: [100, 150, 140, 170, 160, 180],
         backgroundColor: 'rgba(75, 192, 192, 0.6)',
       },
@@ -24,17 +24,12 @@ const App = () => {
       },
       title: {
         display: true,
-        text: 'Annual Data Bar Chart',
+        text: 'Yearly Data Bar Chart',
       },
     },
   };
 
-  return (
-    <div>
-      <h1>Bar Chart Example</h1>
-      <Bar data={data} options={options} />
-    </div>
-  );
+  return <Bar data={data} options={options} />;
 };
 
-export default App;
+export default ChartComponent;
