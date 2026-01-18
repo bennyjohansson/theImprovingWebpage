@@ -4,47 +4,40 @@ import React from 'react';
 const Footer: React.FC = () => {
   return (
     <footer style={footerStyle}>
-      <p>&copy; 2023 Your Company Name</p>
+      <p>&copy; {new Date().getFullYear()} Your Company Name. All rights reserved.</p>
       <div>
-        <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" style={linkStyle}>
-          Facebook
-        </a>
-        <a href="https://www.twitter.com" target="_blank" rel="noopener noreferrer" style={linkStyle}>
-          Twitter
-        </a>
-        <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer" style={linkStyle}>
-          Instagram
-        </a>
+        <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" style={linkStyle}>Facebook</a> | 
+        <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" style={linkStyle}>Twitter</a> | 
+        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" style={linkStyle}>Instagram</a>
       </div>
     </footer>
   );
 };
 
-// App Component
-const App: React.FC = () => {
-  return (
-    <div>
-      <h1>Welcome to the Web Application</h1>
-      {/* Other components and content go here */}
-      <Footer />
-    </div>
-  );
-};
-
-// Styles
 const footerStyle: React.CSSProperties = {
-  backgroundColor: '#f1f1f1',
   textAlign: 'center',
-  padding: '10px 0',
+  padding: '20px',
+  backgroundColor: '#f1f1f1',
   position: 'fixed',
-  bottom: 0,
+  left: '0',
+  bottom: '0',
   width: '100%',
 };
 
 const linkStyle: React.CSSProperties = {
   margin: '0 10px',
   textDecoration: 'none',
-  color: 'blue',
+  color: '#000',
+};
+
+// Main App Component
+const App: React.FC = () => {
+  return (
+    <div>
+      {/* Other components and content would be here */}
+      <Footer />
+    </div>
+  );
 };
 
 export default App;
