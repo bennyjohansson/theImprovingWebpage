@@ -1,12 +1,12 @@
-```tsx
+```javascript
 import React from 'react';
-import './App.css';
+import './App.css'; // Assuming you have a CSS file for styling
 
 const App: React.FC = () => {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>Main Header</h1>
+        My Web Application
       </header>
     </div>
   );
@@ -15,10 +15,10 @@ const App: React.FC = () => {
 export default App;
 ```
 
-App.css:
 ```css
-.App-header h1 {
+/* Assuming this is in App.css */
+.App-header {
   color: blue;
-  font-size: 18px;
+  font-size: 16px; /* Adjust the size as needed */
 }
 ```
