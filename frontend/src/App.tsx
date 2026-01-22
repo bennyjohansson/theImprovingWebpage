@@ -1,18 +1,20 @@
-```jsx
+```javascript
 import React from 'react';
-import SuggestionForm from './components/SuggestionForm';
-import SuggestionList from './components/SuggestionList';
-import Footer from './components/Footer';
+import SuggestionForm from './SuggestionForm';
+import SuggestionList from './SuggestionList';
+import Footer from './Footer';
 
-function App() {
+const App: React.FC = () => {
   return (
     <div className="App">
-      {/* Main header with updated style */}
-      <header className="main-header" style={{ color: 'blue' }}>
-        <h1>Welcome to Our Web Application</h1>
+      <header style={{ color: 'blue' }} className="App-header">
+        {/* Remove any conflicting classes like text-gray-600 if present */}
+        <h1>Welcome to the Self-Improving Web Application</h1>
       </header>
-      <SuggestionForm />
-      <SuggestionList />
+      <main>
+        <SuggestionForm />
+        <SuggestionList />
+      </main>
       <Footer />
     </div>
   );
